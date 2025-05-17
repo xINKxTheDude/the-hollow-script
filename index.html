@@ -603,12 +603,12 @@
         let globalAppGlitchIntervalId = null; 
         let incorrectPetitionAttempts = 0; 
         let mouseFollowerTimeout = null; 
-        let isInfoBoxPersistent = false; // For petition hint toggle
+        let infoMessageBoxTimeout = null; 
 
         // --- Secret Petition State ---
         let trueSecretAnswer = "";
         let inSecretMode = false; 
-        let dynamicMaskTextPhrase = "Oracle please answer the following question"; // Default
+        let dynamicMaskTextPhrase = "Oracle please answer the following question"; 
         let textBeforeSecretMode = ""; 
 
         // --- Spirit Names & State ---
@@ -750,19 +750,31 @@
 
         muteButton.addEventListener('click', toggleAmbientSound);
         
+        function hideInfoBox() {
+            infoMessageBox.style.opacity = 0;
+            setTimeout(() => { infoMessageBox.style.display = 'none'; }, 500);
+            if (infoMessageBoxTimeout) {
+                clearTimeout(infoMessageBoxTimeout);
+                infoMessageBoxTimeout = null;
+            }
+        }
+
         petitionHintButton.addEventListener('click', () => {
             startTone(); 
+            if (infoMessageBox.style.display === 'block' && infoMessageBox.style.opacity === '1') { // If it's visible and not fading out
+                hideInfoBox();
+                return;
+            }
+
             const petitionText = currentSpirit ? `"${dynamicMaskTextPhrase.trim()}"` : "Summon a spirit to learn the petition.";
             infoMessageBox.textContent = `The petition is: ${petitionText}`;
-            
-            if (isInfoBoxPersistent) {
-                infoMessageBox.style.opacity = 0;
-                setTimeout(() => { infoMessageBox.style.display = 'none'; }, 500);
-                isInfoBoxPersistent = false;
-            } else {
-                infoMessageBox.style.display = 'block';
-                requestAnimationFrame(() => { infoMessageBox.style.opacity = 1; });
-                isInfoBoxPersistent = true;
+            infoMessageBox.style.display = 'block';
+            requestAnimationFrame(() => { infoMessageBox.style.opacity = 1; });
+
+            if (infoMessageBoxTimeout) clearTimeout(infoMessageBoxTimeout); 
+
+            if (!currentSpirit) { 
+                infoMessageBoxTimeout = setTimeout(hideInfoBox, 5000);
             }
         });
 
@@ -776,7 +788,7 @@
         }
 
         function updateControlsForSpiritState(hasSpirit) {
-            petitionHintButton.disabled = false; // Petition hint always enabled
+            petitionHintButton.disabled = false; 
 
             if (hasSpirit) {
                 petitionInput.disabled = false;
@@ -827,6 +839,7 @@
         function findAndAssignSpirit(isAutoSummon = false) {
             startTone(); 
             lockAllControls(true); 
+            hideInfoBox(); 
 
             let newSpirit;
             do {
@@ -847,17 +860,20 @@
                 }
             }); 
         }
-        findSpiritButton.addEventListener('click', () => findAndAssignSpirit(false));
+        findSpiritButton.addEventListener('click', () => {
+            hideInfoBox();
+            findAndAssignSpirit(false);
+        });
 
         function disconnectSpirit() {
             startTone();
             if (currentSpirit) {
                 lockAllControls(true);
+                hideInfoBox();
 
                 infoMessageBox.textContent = `You have Disconnected from the Spirit (${currentSpirit}).`;
                 infoMessageBox.style.display = 'block';
                 infoMessageBox.style.opacity = 1;
-                isInfoBoxPersistent = true; // Keep it open until next action
                 
                 currentSpirit = null;
                 lastSpirit = null; 
@@ -865,11 +881,19 @@
                 currentSpiritNameElement.textContent = "";
                 currentSpiritNameElement.classList.remove('visible');
                 
-                // Don't use timeout to hide, let it persist
-                updateControlsForSpiritState(false); 
+                setTimeout(() => {
+                    infoMessageBox.style.opacity = 0;
+                    setTimeout(() => { 
+                        infoMessageBox.style.display = 'none'; 
+                        updateControlsForSpiritState(false); 
+                    }, 500);
+                }, 3000);
             }
         }
-        disconnectSpiritButton.addEventListener('click', disconnectSpirit);
+        disconnectSpiritButton.addEventListener('click', () => {
+            hideInfoBox();
+            disconnectSpirit();
+        });
 
 
         function setupPentagramCandles() {
@@ -939,7 +963,7 @@
         petitionInput.addEventListener('focus', () => {
             oracleResponseElement.textContent = "";
             oracleResponseElement.classList.remove('revealed', 'countdown-active', 'text-glitch-active');
-            oracleResponseElement.innerHTML = ""; // Clear any appended spans like fade-in-spirit
+            oracleResponseElement.innerHTML = ""; 
         });
 
 
@@ -1091,11 +1115,8 @@
                 }
             });
 
-            // Hide petition hint when asking a question
-            if (isInfoBoxPersistent) {
-                infoMessageBox.style.opacity = 0;
-                setTimeout(() => { infoMessageBox.style.display = 'none'; }, 500);
-                isInfoBoxPersistent = false;
+            if (infoMessageBox.style.display === 'block') { // Hide petition hint if it was open
+                hideInfoBox();
             }
 
 
