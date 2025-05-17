@@ -558,7 +558,24 @@
     
     <div id="infoMessageBox"></div>
     <div id="spiritFoundBox"></div>
-    <div id="mouseFollowerMessage"></div> <div class="oracle-container">
+    <div id="mouseFollowerMessage"></div> 
+    
+    <button id="aboutButton" title="About this app" style="
+        position: fixed;
+        bottom: 15px;
+        left: 15px;
+        background: rgba(44,44,44,0.5);
+        border: 1px solid #555;
+        color: #ccc;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        font-size: 1.1em;
+        cursor: pointer;
+        z-index: 9999;
+    ">?</button>
+
+    <div class="oracle-container">
         <h1>The Hollow Script</h1>
         <div id="currentSpiritName"></div> 
         <label for="petitionInput">Please write your petition here.</label>
@@ -572,6 +589,42 @@
         </div>
         <button id="muteButton" title="Toggle Ambient Sound">
             🔇 </button>
+    </div>
+
+    <div id="aboutModal" style="
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(10,10,10,0.95);
+        color: #FFD700;
+        padding: 25px 35px;
+        border: 1px solid #6c0000;
+        border-radius: 10px;
+        font-family: 'EB Garamond', serif;
+        z-index: 10000;
+        box-shadow: 0 0 25px #000;
+        text-align: center;
+        max-width: 90%;
+    ">
+        <h2 style="margin-top: 0;">🔮 The Hollow Script</h2>
+        <p>Created by <strong>xINKxTheDude</strong></p>
+        <p>Inspired by PeterAnswers.com — but completely original.</p>
+        <p>Code, audio effects, and design © 2025. All rights reserved.</p>
+        <p>
+            GitHub: <a href="https://github.com/xINKxTheDude" target="_blank" style="color: #B8860B;">@xINKxTheDude</a><br>
+            Twitch: <a href="https://twitch.tv/xINKxTheDude" target="_blank" style="color: #B8860B;">@xINKxTheDude</a>
+        </p>
+        <button onclick="document.getElementById('aboutModal').style.display='none'" style="
+            margin-top: 15px;
+            padding: 8px 16px;
+            background: #6c0000;
+            border: none;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+        ">Close</button>
     </div>
     
     <script>
@@ -590,6 +643,8 @@
         const currentSpiritNameElement = document.getElementById('currentSpiritName');
         const spiritFoundBox = document.getElementById('spiritFoundBox');
         const mouseFollowerMessage = document.getElementById('mouseFollowerMessage');
+        const aboutButton = document.getElementById('aboutButton'); // Added
+        const aboutModal = document.getElementById('aboutModal');   // Added
 
 
         let synth; 
@@ -761,7 +816,7 @@
 
         petitionHintButton.addEventListener('click', () => {
             startTone(); 
-            if (infoMessageBox.style.display === 'block' && infoMessageBox.style.opacity === '1') { // If it's visible and not fading out
+            if (infoMessageBox.style.display === 'block' && infoMessageBox.style.opacity === '1') { 
                 hideInfoBox();
                 return;
             }
@@ -781,7 +836,7 @@
         function lockAllControls(lock) {
             findSpiritButton.disabled = lock;
             disconnectSpiritButton.disabled = lock;
-            petitionHintButton.disabled = lock;
+            petitionHintButton.disabled = lock; // Keep petition hint generally enabled
             askButton.disabled = lock;
             petitionInput.disabled = lock;
             questionInput.disabled = lock;
@@ -1115,7 +1170,7 @@
                 }
             });
 
-            if (infoMessageBox.style.display === 'block') { // Hide petition hint if it was open
+            if (infoMessageBox.style.display === 'block') { 
                 hideInfoBox();
             }
 
@@ -1190,7 +1245,9 @@
                 !event.target.closest('.oracle-container') &&
                 !event.target.closest('.controls-area button') &&
                 !event.target.closest('#infoMessageBox') && 
-                !event.target.closest('#spiritFoundBox') 
+                !event.target.closest('#spiritFoundBox') &&
+                event.target.id !== 'aboutButton' && // Don't trigger for about button
+                !event.target.closest('#aboutModal') // Don't trigger if clicking inside about modal
             ) {
                 if (mouseFollowerActive) return; 
                 
@@ -1247,6 +1304,19 @@
         window.addEventListener('resize', () => {
             requestAnimationFrame(setupPentagramCandles); 
         });
+
+        // About Modal Functionality
+        if(aboutButton && aboutModal){ // Check if elements exist
+            aboutButton.addEventListener('click', () => {
+                startTone(); // Ensure audio context is active for any sounds in modal if added later
+                aboutModal.style.display = 'block';
+                requestAnimationFrame(() => { // Ensure display is block before starting opacity transition
+                    aboutModal.style.opacity = 1;
+                });
+            });
+            // Close button inside modal uses inline onclick
+        }
+
     </script>
 </body>
 </html>
