@@ -1318,5 +1318,44 @@
         }
 
     </script>
+    <div id="aboutModal" style="
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(10,10,10,0.95);
+    color: #FFD700;
+    padding: 25px 35px;
+    border: 1px solid #6c0000;
+    border-radius: 10px;
+    font-family: 'EB Garamond', serif;
+    z-index: 10000;
+    box-shadow: 0 0 25px #000;
+    text-align: center;
+    max-width: 90%;
+">
+    <h2 style="margin-top: 0;">🔮 The Hollow Script</h2>
+    <p>Created by <strong>xINKxTheDude</strong></p>
+    <p>Inspired by PeterAnswers.com — but completely original.</p>
+    <p>Code, audio effects, and design © 2025. All rights reserved.</p>
+    <p>
+        GitHub: <a href="https://github.com/xINKxTheDude" target="_blank" style="color: #B8860B;">@xINKxTheDude</a><br>
+        Twitch: <a href="https://twitch.tv/xINKxTheDude" target="_blank" style="color: #B8860B;">@xINKxTheDude</a>
+    </p>
+    <button onclick="document.getElementById('aboutModal').style.display='none'" style="
+        margin-top: 15px;
+        padding: 8px 16px;
+        background: #6c0000;
+        border: none;
+        color: #fff;
+        border-radius: 5px;
+        cursor: pointer;
+    ">Close</button>
+</div>
+    <!-- Watermark (hidden from UI but visible in page source) -->
+<div style="display:none;">
+    Created by xINKxTheDude • 2025 • https://github.com/xINKxTheDude
+</div>
 </body>
 </html>
