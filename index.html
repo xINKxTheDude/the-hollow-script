@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Hollow Script</title>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,700;1,400&family=Creepster&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --container-bg-color: #101010; 
+            --input-bg-color: #2c2c2c; 
+            --text-color: #c0c0c0; 
+            --primary-accent-color: #6c0000; 
+            --primary-accent-glow: #6c000099; 
+            --secondary-accent-color: #b8860b; 
+            --border-color: #404040; 
+            --shadow-color: rgba(0, 0, 0, 0.7); 
+            --font-family: 'EB Garamond', serif; 
+            --creepy-font: 'Creepster', cursive;
+            --pentagram-color: #666666; 
+            --candle-glow-color: rgba(255, 165, 0, 0.6); 
+            --candle-aura-color: rgba(255, 165, 0, 0.2); 
+            --glitch-color1: #ff00ff; /* Magenta for glitch */
+            --glitch-color2: #00ffff; /* Cyan for glitch */
+        }
+
+        body { /* ghostly-mode class will be added here directly */
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column; 
+            align-items: center;
+            justify-content: center; 
+            min-height: 100vh;
+            text-align: center;
+            overflow: hidden; 
+            position: relative; 
+            transition: background-color 0.5s ease;
+        }
+
+        #pentagram-bg {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 80vmin; 
+            height: 80vmin;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        #pentagram-bg svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible; 
+        }
+
+        #pentagram-bg .pentagram-line {
+            stroke: var(--pentagram-color);
+            stroke-width: 1.5; 
+            fill: none;
+            opacity: 0.8; 
+            stroke-dasharray: 1000; 
+            stroke-dashoffset: 1000; 
+            animation: drawPentagram 5s ease-out forwards; 
+        }
+        #pentagram-bg .pentagram-line.inner {
+             animation-delay: 1s; 
+        }
+
+        @keyframes drawPentagram {
+            to {
+                stroke-dashoffset: 0; 
+            }
+        }
+        
+        .pentagram-candle {
+            position: fixed; 
+            width: 60px; 
+            height: 60px;
+            border-radius: 50%;
+            pointer-events: auto; 
+            z-index: 0;
+            background: radial-gradient(ellipse at center, 
+                                        var(--candle-glow-color) 0%, 
+                                        var(--candle-aura-color) 30%, 
+                                        transparent 70%);
+            animation: subtleFlicker 3s infinite alternate ease-in-out;
+            box-shadow: 0 0 15px 5px var(--candle-aura-color); 
+            transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.5s ease; 
+        }
+        
+        .pentagram-candle:hover {
+            transform: scale(1.15); 
+            box-shadow: 0 0 25px 10px var(--candle-aura-color), 0 0 35px 15px var(--candle-glow-color); 
+        }
+
+        .pentagram-candle.center {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(ellipse at center, 
+                                        var(--candle-glow-color) 0%, 
+                                        var(--candle-aura-color) 35%, 
+                                        transparent 70%);
+            box-shadow: 0 0 20px 8px var(--candle-aura-color);
+        }
+
+        @keyframes subtleFlicker { 
+            0% { opacity: 0.6; transform: scale(0.98); }
+            20% { opacity: 0.7; transform: scale(1.02); }
+            40% { opacity: 0.55; transform: scale(0.96); }
+            60% { opacity: 0.75; transform: scale(1.03); }
+            80% { opacity: 0.65; transform: scale(0.97); }
+            100% { opacity: 0.6; transform: scale(0.98); }
+        }
+
+        /* Control Buttons Area */
+        .controls-area {
+            display: flex;
+            flex-direction: row; 
+            align-items: center;
+            justify-content: center; 
+            gap: 15px; 
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2; 
+        }
+
+
+        /* Petition Hint & Find Spirit Buttons */
+        #petitionHintButton, #findSpiritButton, #disconnectSpiritButton {
+            background-color: rgba(27, 27, 27, 0.5); 
+            color: var(--text-color);
+            border: 1px solid rgba(184, 134, 11, 0.5); 
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: var(--font-family);
+            font-size: 0.9em;
+            transition: background-color 0.3s, box-shadow 0.3s, opacity 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+            opacity: 0.6; 
+        }
+        #petitionHintButton:hover:not(:disabled), 
+        #findSpiritButton:hover:not(:disabled), 
+        #disconnectSpiritButton:hover:not(:disabled) {
+            background-color: rgba(40, 40, 40, 0.7);
+            box-shadow: 0 4px 10px rgba(108, 0, 0, 0.4);
+            opacity: 1;
+        }
+        #disconnectSpiritButton {
+            display: none; /* Hidden by default */
+        }
+
+        
+        #infoMessageBox, #spiritFoundBox, #mouseFollowerMessage {
+            display: none;
+            position: fixed; 
+            background: rgba(10,10,10,0.95); 
+            color: var(--secondary-accent-color);
+            padding: 15px 25px;
+            border: 1px solid var(--primary-accent-color);
+            border-radius: 8px;
+            z-index: 10001; 
+            box-shadow: 0 5px 20px rgba(0,0,0,0.6);
+            font-size: 1.1em;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            pointer-events: none; 
+        }
+        #infoMessageBox { 
+             top: 20px; 
+             left: 50%;
+             transform: translateX(-50%);
+        }
+        #spiritFoundBox { 
+            top: 50%; 
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: var(--creepy-font);
+            font-size: 2.2em; 
+            color: var(--glitch-color2); 
+            text-shadow: 0 0 10px var(--glitch-color1);
+        }
+        #mouseFollowerMessage {
+            padding: 8px 12px;
+            font-size: 0.9em;
+            color: var(--primary-accent-color);
+            background: rgba(0,0,0,0.8);
+            border-radius: 5px;
+        }
+
+
+        .oracle-container {
+            background-color: var(--container-bg-color);
+            padding: 30px 40px;
+            border-radius: 10px; 
+            border: 1px solid var(--border-color);
+            box-shadow: 0 0 25px 5px rgba(0,0,0,0.5), 
+                        inset 0 0 15px rgba(0,0,0,0.3); 
+            width: 90%;
+            max-width: 550px; 
+            position: relative; 
+            z-index: 1; 
+            transition: background-color 0.5s ease, box-shadow 0.5s ease, border-color 0.5s ease;
+            max-height: 70vh; 
+            overflow-y: auto; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            font-size: 2.6em; 
+            font-weight: 700;
+            color: var(--primary-accent-color);
+            text-shadow: 0 0 12px var(--primary-accent-glow), 0 0 3px var(--text-color); 
+            margin-bottom: 5px; 
+            transition: text-shadow 0.5s ease, color 0.5s ease;
+            position: relative; 
+        }
+        #currentSpiritName {
+            font-family: var(--creepy-font);
+            font-size: 1.8em;
+            color: var(--secondary-accent-color);
+            text-shadow: 0 0 8px var(--secondary-accent-color);
+            margin-bottom: 20px;
+            min-height: 1.5em; 
+            opacity: 0; 
+            transition: opacity 5s ease-in-out, color 0.5s ease, text-shadow 0.5s ease;
+        }
+        #currentSpiritName.visible {
+            opacity: 1;
+        }
+
+
+        label {
+            display: block;
+            font-size: 1.1em; 
+            font-weight: 500;
+            margin-top: 20px; 
+            margin-bottom: 8px;
+            color: var(--text-color);
+            text-align: left;
+        }
+
+        input[type="text"],
+        textarea {
+            font-family: var(--font-family);
+            background-color: var(--input-bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px; 
+            padding: 14px;
+            width: 100%; 
+            font-size: 1.1em; 
+            margin-bottom: 15px; 
+            box-sizing: border-box;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, opacity 0.3s ease;
+        }
+        input:disabled, textarea:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-accent-color);
+            box-shadow: 0 0 8px 2px var(--primary-accent-glow); 
+        }
+        
+        textarea {
+            min-height: 100px; 
+            resize: vertical;
+        }
+
+        button {
+            font-family: var(--font-family);
+            background: var(--primary-accent-color); 
+            color: var(--text-color); 
+            border: 1px solid var(--secondary-accent-color); 
+            border-radius: 6px;
+            padding: 14px 28px;
+            font-size: 1.25em; 
+            font-weight: 700; 
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease, border-color 0.3s ease, opacity 0.3s ease;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7); 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            margin-top: 15px;
+            width: 100%;
+        }
+        button:disabled {
+            opacity: 0.4 !important; 
+            cursor: not-allowed !important;
+            background-color: #333 !important;
+            border-color: #555 !important;
+            color: #888 !important;
+        }
+
+
+        button:hover:not(:disabled) {
+            background-color: #5a0000; 
+            border-color: #ffd700; 
+            color: #ffffff;
+            transform: translateY(-3px) scale(1.02); 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6), 0 0 15px var(--primary-accent-glow); 
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0px) scale(0.98); 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5), inset 0 0 10px rgba(0,0,0,0.3);
+        }
+
+        .response-area {
+            margin-top: 30px; 
+            padding: 25px;
+            background-color: var(--input-bg-color); 
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            min-height: 70px; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: box-shadow 0.3s ease, background-color 0.3s ease;
+            position: relative; 
+            flex-shrink: 0; 
+        }
+
+        #oracleResponse {
+            font-size: 1.4em; 
+            font-weight: 500; 
+            color: var(--secondary-accent-color); 
+            font-style: italic; 
+            word-wrap: break-word;
+            opacity: 0; 
+            transform: translateY(10px) scale(0.98); 
+            transition: opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                        transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                        text-shadow 0.7s ease, color 0.5s ease, font-size 0.3s ease; 
+            position: relative; 
+        }
+
+        #oracleResponse.revealed {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            text-shadow: 0 0 15px var(--secondary-accent-color), 0 0 5px var(--secondary-accent-color); 
+        }
+        
+        #oracleResponse.countdown-active {
+            position: fixed; 
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 15vmin; 
+            font-weight: 700;
+            color: var(--glitch-color1);
+            text-shadow: 0 0 15px var(--glitch-color2), 0 0 30px var(--glitch-color1);
+            opacity: 1; 
+            z-index: 10000; 
+            background-color: transparent; 
+            padding: 0; 
+        }
+
+        /* Style for the fading-in part of the final message */
+        .fade-in-spirit {
+            opacity: 0;
+            transition: opacity 4s ease-in-out; 
+        }
+        .fade-in-spirit.visible {
+            opacity: 1;
+        }
+
+
+        /* Ghostly Mode Styles - Applied directly to body now */
+        body.ghostly-mode .oracle-container {
+            background-color: rgba(10, 10, 10, 0.75); 
+            box-shadow: 0 0 50px 20px rgba(80, 0, 0, 0.55); 
+            border-color: rgba(108, 0, 0, 0.3); 
+        }
+
+        body.ghostly-mode h1 {
+            color: #8c0000; 
+            text-shadow: 0 0 20px rgba(108,0,0,0.8), 0 0 8px rgba(220, 150, 150, 0.6); 
+        }
+        
+        body.ghostly-mode input[type="text"],
+        body.ghostly-mode textarea {
+            background-color: rgba(44, 44, 44, 0.7); 
+            border-color: rgba(108, 0, 0, 0.5);
+        }
+
+        body.ghostly-mode #oracleResponse.revealed {
+            color: #ffb700; 
+            text-shadow: 0 0 25px rgba(255,183,0,0.7), 0 0 10px rgba(255,183,0,0.5); 
+        }
+
+        body.ghostly-mode #pentagram-bg {
+            opacity: 0.7; 
+        }
+        body.ghostly-mode .pentagram-candle {
+            opacity: 0.9; 
+            box-shadow: 0 0 25px 10px var(--candle-aura-color), 0 0 15px 5px var(--candle-glow-color);
+        }
+        
+        /* Text Glitch Effect Styles */
+        .text-glitch-active {
+            animation: textGlitchAnim 0.1s infinite linear; 
+            position: relative; 
+        }
+
+        .text-glitch-active::before {
+            content: attr(data-glitch); 
+            position: absolute;
+            left: -2px;
+            top: -1px;
+            color: var(--glitch-color1);
+            overflow: hidden;
+            clip-path: inset(0 0 50% 0); 
+            animation: textGlitchPseudo 0.05s infinite linear alternate-reverse;
+            opacity: 0.8;
+        }
+       
+        @keyframes textGlitchAnim {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(-2px, 2px); }
+            50% { transform: translate(2px, -2px); }
+            75% { transform: translate(1px, 1px); }
+            100% { transform: translate(0, 0); }
+        }
+         @keyframes textGlitchPseudo {
+            0% { text-shadow: -1px -1px 0 var(--glitch-color2); }
+            100% { text-shadow: 1px 1px 0 var(--glitch-color1); }
+        }
+
+        /* Pentagram Line Glitch Styles */
+        .pentagram-glitch-active .pentagram-line {
+            animation: pentagramFlickerAnim 0.3s linear infinite;
+        }
+
+        @keyframes pentagramFlickerAnim {
+            0% { opacity: 0.2; stroke: var(--glitch-color1); }
+            25% { opacity: 0.8; }
+            50% { opacity: 0.3; stroke: var(--glitch-color2); }
+            75% { opacity: 0.9; }
+            100% { opacity: 0.2; stroke: var(--pentagram-color); }
+        }
+
+        /* Whole App Glitch Styles */
+        body.app-glitch-active {
+            animation: appBodyShake 0.15s linear infinite; 
+        }
+
+        body.app-glitch-active::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: -5px; 
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                var(--glitch-color1),
+                var(--glitch-color1) 1px, 
+                transparent 1px,
+                transparent 4px 
+            );
+            opacity: 0.08; 
+            z-index: 9998; 
+            animation: appGlitchLinesMove 0.15s linear infinite; 
+            pointer-events: none;
+        }
+
+        body.app-glitch-active::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 5px; 
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                var(--glitch-color2),
+                var(--glitch-color2) 1px, 
+                transparent 1px,
+                transparent 4px
+            );
+            opacity: 0.08; 
+            z-index: 9999;
+            animation: appGlitchLinesMove 0.15s linear infinite reverse; 
+            pointer-events: none;
+        }
+
+        @keyframes appBodyShake {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(1px, -0.5px); } 
+            50% { transform: translate(-1px, 0.5px); }
+            75% { transform: translate(0.5px, 1px); }
+        }
+
+        @keyframes appGlitchLinesMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-5px); } 
+        }
+
+
+        /* Mute Button Styles */
+        #muteButton {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background-color: rgba(44, 44, 44, 0.6);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            transition: background-color 0.3s, color 0.3s;
+            z-index: 10; 
+        }
+        #muteButton:hover {
+            background-color: rgba(60, 60, 60, 0.8);
+        }
+
+    </style>
+</head>
+<body class="ghostly-mode"> 
+    <div id="pentagram-bg">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+            <polygon class="pentagram-line" points="50,5 95,39.5 79,95 21,95 5,39.5" />
+            <line class="pentagram-line inner" x1="50" y1="5" x2="79" y2="95" />
+            <line class="pentagram-line inner" x1="50" y1="5" x2="21" y2="95" />
+            <line class="pentagram-line inner" x1="95" y1="39.5" x2="21" y2="95" />
+            <line class="pentagram-line inner" x1="95" y1="39.5" x2="5" y2="39.5" /> 
+            <line class="pentagram-line inner" x1="79" y1="95" x2="5" y2="39.5" />
+        </svg>
+    </div>
+
+    <div id="pentagram-candles-container"></div>
+    
+    <div class="controls-area">
+        <button id="findSpiritButton">Summon a Spirit</button>
+        <button id="disconnectSpiritButton">Disconnect From Spirit</button>
+        <button id="petitionHintButton">Click here for petition!</button>
+    </div>
+    
+    <div id="infoMessageBox"></div>
+    <div id="spiritFoundBox"></div>
+    <div id="mouseFollowerMessage"></div> <div class="oracle-container">
+        <h1>The Hollow Script</h1>
+        <div id="currentSpiritName"></div> 
+        <label for="petitionInput">Please write your petition here.</label>
+        <textarea id="petitionInput" rows="4" placeholder="The spirits await your plea..."></textarea>
+        
+        <label for="questionInput">Please ask your question here.</label>
+        <input type="text" id="questionInput" placeholder="What questions do you wish to be answered?">
+        
+        <button id="askButton">Risk the Question...</button> <div class="response-area">
+            <p id="oracleResponse">The Oracle slumbers...</p>
+        </div>
+        <button id="muteButton" title="Toggle Ambient Sound">
+            🔇 </button>
+    </div>
+    
+    <script>
+        const petitionInput = document.getElementById('petitionInput');
+        const questionInput = document.getElementById('questionInput');
+        const askButton = document.getElementById('askButton');
+        const oracleResponseElement = document.getElementById('oracleResponse');
+        const pentagramBgElement = document.getElementById('pentagram-bg');
+        const pentagramSVG = document.querySelector('#pentagram-bg svg');
+        const candlesContainer = document.getElementById('pentagram-candles-container');
+        const muteButton = document.getElementById('muteButton');
+        const petitionHintButton = document.getElementById('petitionHintButton');
+        const infoMessageBox = document.getElementById('infoMessageBox');
+        const findSpiritButton = document.getElementById('findSpiritButton');
+        const disconnectSpiritButton = document.getElementById('disconnectSpiritButton');
+        const currentSpiritNameElement = document.getElementById('currentSpiritName');
+        const spiritFoundBox = document.getElementById('spiritFoundBox');
+        const mouseFollowerMessage = document.getElementById('mouseFollowerMessage');
+
+
+        let synth; 
+        let ambientNoise, ambientFilter; 
+        let globalGlitchNoiseSynth; 
+        let countdownGlitchSynth; 
+        let eerieCountdownSynth, eerieChorus, eerieReverb; 
+        let isAmbientSoundInitialized = false;
+        let isAmbientSoundPlaying = false;
+        let toneStarted = false; 
+        let globalAppGlitchIntervalId = null; 
+        let incorrectPetitionAttempts = 0; 
+        let mouseFollowerTimeout = null; 
+        let isInfoBoxPersistent = false; // For petition hint toggle
+
+        // --- Secret Petition State ---
+        let trueSecretAnswer = "";
+        let inSecretMode = false; 
+        let dynamicMaskTextPhrase = "Oracle please answer the following question"; // Default
+        let textBeforeSecretMode = ""; 
+
+        // --- Spirit Names & State ---
+        const spiritNames = [
+            "The Ashen Watcher", "Whisperwind", "The Obsidian Shade", "Gravebloom", "Moondrinker",
+            "The Crimson Scribe", "Echoweaver", "Soulfire Remnant", "The Veiled Mourner", "Nightshade Phantom",
+            "The Corpse Candle", "Rustling Rags", "The Forgotten Dirge", "Shadow-Stitcher", "The Silent Cartographer",
+            "Iron Maiden's Sigh", "The Dust Devil's Kin", "Banshee's Echo", "The Crypt Keeper's Secret", "The Gallows' Bloom",
+            "Wraith of the Wold", "The Ink-Stained Apparition", "The Bell Tower's Lament", "Mistral Spirit", "The Hearth's Cold Ember",
+            "The Chain Rattler", "The Somber Sojourner", "The Bone Collector's Due", "The Pale Piper", "The Midnight Gardener",
+            "The Shattered Reflection", "The Weeping Willow's Ghost", "The Unseen Attendant", "The Librarian of Lost Souls", "The Clockwork Heart",
+            "The Serpent of Smoke", "The Frozen Tear", "The Whispering Skull", "The Navigator of Nightmares", "The Keeper of Faded Memories",
+            "The Hollow Minstrel", "The Spectral Gardener", "The Carrion Crow's Companion", "The Threshold Guardian", "The Phantom of the Opera Glass",
+            "The Soot-Stained Child", "The Mariner's Misery", "The Forgotten Toymaker", "The Lady in Grey Flannel", "The Watcher from the Walls"
+        ];
+        let currentSpirit = null;
+        let lastSpirit = null;
+
+
+        async function startTone() {
+            if (!toneStarted && typeof Tone !== 'undefined' && Tone.context.state !== 'running') {
+                try {
+                    await Tone.start();
+                    toneStarted = true;
+                } catch (e) {
+                    console.error("Error starting Tone.js AudioContext:", e);
+                }
+            }
+        }
+
+        function initReplySynth() {
+            if (!synth && typeof Tone !== 'undefined') {
+                synth = new Tone.Synth({
+                    oscillator: { type: 'triangle' }, 
+                    envelope: { attack: 0.02, decay: 0.2, sustain: 0.3, release: 0.8 },
+                    volume: -18 
+                }).toDestination();
+            }
+        }
+        
+        function initAmbientSound() {
+            if (!isAmbientSoundInitialized && typeof Tone !== 'undefined') {
+                ambientNoise = new Tone.Noise("brown").start();
+                ambientNoise.volume.value = -35; 
+
+                ambientFilter = new Tone.AutoFilter({
+                    frequency: "8m", 
+                    baseFrequency: 60, 
+                    octaves: 3,      
+                    depth: 0.5       
+                }).toDestination();
+                
+                ambientNoise.connect(ambientFilter);
+                isAmbientSoundInitialized = true;
+            }
+        }
+
+        function initGlobalGlitchSound() {
+            if (!globalGlitchNoiseSynth && typeof Tone !== 'undefined') {
+                globalGlitchNoiseSynth = new Tone.MembraneSynth({
+                    pitchDecay: 0.008,
+                    octaves: 2,
+                    envelope: { attack: 0.001, decay: 0.07, sustain: 0 } 
+                }).toDestination();
+                globalGlitchNoiseSynth.volume.value = -22; 
+            }
+        }
+
+        function playGlobalGlitchSound() {
+            startTone().then(() => {
+                if (!globalGlitchNoiseSynth) initGlobalGlitchSound();
+                if (globalGlitchNoiseSynth) globalGlitchNoiseSynth.triggerAttackRelease("G1", "64n", Tone.now()); 
+            });
+        }
+
+        function initCountdownGlitchSound() {
+            if (!countdownGlitchSynth && typeof Tone !== 'undefined') {
+                countdownGlitchSynth = new Tone.NoiseSynth({
+                    noise: { type: 'white' }, 
+                    envelope: { attack: 0.001, decay: 0.02, sustain: 0 } 
+                }).toDestination();
+                countdownGlitchSynth.volume.value = -32; 
+            }
+        }
+
+        function playCountdownGlitchSound() {
+             startTone().then(() => {
+                if (!countdownGlitchSynth) initCountdownGlitchSound();
+                if (countdownGlitchSynth) countdownGlitchSynth.triggerAttackRelease("128n", Tone.now()); 
+            });
+        }
+
+        function initEerieCountdownSound() {
+            if (!eerieCountdownSynth && typeof Tone !== 'undefined') {
+                eerieCountdownSynth = new Tone.Oscillator({
+                    frequency: "C2", type: "sawtooth", volume: -60 
+                });
+                eerieChorus = new Tone.Chorus(4, 2.5, 0.7).toDestination(); 
+                eerieReverb = new Tone.Freeverb(0.7, 3000).connect(eerieChorus); 
+                eerieCountdownSynth.connect(eerieReverb);
+            }
+        }
+
+        function startEerieCountdownSound() {
+            startTone().then(() => {
+                if (!eerieCountdownSynth) initEerieCountdownSound();
+                if (eerieCountdownSynth && eerieCountdownSynth.state !== "started") {
+                    eerieCountdownSynth.volume.value = -60; 
+                    eerieCountdownSynth.start();
+                }
+            });
+        }
+
+        function stopEerieCountdownSound() {
+            if (eerieCountdownSynth && eerieCountdownSynth.state === "started") {
+                eerieCountdownSynth.volume.rampTo(-Infinity, 0.5, Tone.now() + 0.1); 
+            }
+        }
+
+
+        function toggleAmbientSound() {
+            startTone().then(() => { 
+                if (!isAmbientSoundInitialized) initAmbientSound();
+                if (ambientNoise) { 
+                    if (isAmbientSoundPlaying) {
+                        ambientNoise.volume.rampTo(-Infinity, 0.5); 
+                        muteButton.innerHTML = '🔇'; 
+                        muteButton.title = "Unmute Ambient Sound";
+                        isAmbientSoundPlaying = false;
+                    } else {
+                        ambientNoise.volume.rampTo(-35, 0.5); 
+                        muteButton.innerHTML = '🔊'; 
+                        muteButton.title = "Mute Ambient Sound";
+                        isAmbientSoundPlaying = true;
+                    }
+                }
+            });
+        }
+
+        muteButton.addEventListener('click', toggleAmbientSound);
+        
+        petitionHintButton.addEventListener('click', () => {
+            startTone(); 
+            const petitionText = currentSpirit ? `"${dynamicMaskTextPhrase.trim()}"` : "Summon a spirit to learn the petition.";
+            infoMessageBox.textContent = `The petition is: ${petitionText}`;
+            
+            if (isInfoBoxPersistent) {
+                infoMessageBox.style.opacity = 0;
+                setTimeout(() => { infoMessageBox.style.display = 'none'; }, 500);
+                isInfoBoxPersistent = false;
+            } else {
+                infoMessageBox.style.display = 'block';
+                requestAnimationFrame(() => { infoMessageBox.style.opacity = 1; });
+                isInfoBoxPersistent = true;
+            }
+        });
+
+        function lockAllControls(lock) {
+            findSpiritButton.disabled = lock;
+            disconnectSpiritButton.disabled = lock;
+            petitionHintButton.disabled = lock;
+            askButton.disabled = lock;
+            petitionInput.disabled = lock;
+            questionInput.disabled = lock;
+        }
+
+        function updateControlsForSpiritState(hasSpirit) {
+            petitionHintButton.disabled = false; // Petition hint always enabled
+
+            if (hasSpirit) {
+                petitionInput.disabled = false;
+                questionInput.disabled = false;
+                askButton.disabled = false;
+                disconnectSpiritButton.style.display = 'inline-block';
+                disconnectSpiritButton.disabled = false;
+                findSpiritButton.textContent = "Find New Spirit";
+                findSpiritButton.disabled = false;
+            } else {
+                petitionInput.disabled = true;
+                questionInput.disabled = true;
+                askButton.disabled = true;
+                disconnectSpiritButton.style.display = 'none';
+                disconnectSpiritButton.disabled = true;
+                findSpiritButton.textContent = "Summon a Spirit";
+                findSpiritButton.disabled = false; 
+            }
+        }
+
+
+        function showSpiritFoundNotification(callback) {
+            spiritFoundBox.textContent = "Spirit Bound";
+            spiritFoundBox.style.display = 'block';
+            requestAnimationFrame(() => { 
+                spiritFoundBox.style.opacity = 1;
+            });
+
+            setTimeout(() => { 
+                spiritFoundBox.style.opacity = 0;
+                setTimeout(() => {
+                    spiritFoundBox.style.display = 'none';
+                    currentSpiritNameElement.classList.add('visible'); 
+                    
+                    if (Math.random() < 0.47) { 
+                        setTimeout(() => applyTextGlitch(currentSpiritNameElement, 400), 100); 
+                    }
+
+                    setTimeout(() => {
+                        if (callback) callback();
+                    }, 5000); 
+
+                }, 500); 
+            }, 3000); 
+        }
+        
+
+        function findAndAssignSpirit(isAutoSummon = false) {
+            startTone(); 
+            lockAllControls(true); 
+
+            let newSpirit;
+            do {
+                newSpirit = spiritNames[Math.floor(Math.random() * spiritNames.length)];
+            } while (newSpirit === lastSpirit && spiritNames.length > 1); 
+
+            lastSpirit = currentSpirit;
+            currentSpirit = newSpirit;
+            dynamicMaskTextPhrase = `${currentSpirit} please answer the following question `; 
+            
+            currentSpiritNameElement.classList.remove('visible'); 
+            currentSpiritNameElement.textContent = currentSpirit; 
+            
+            showSpiritFoundNotification(() => {
+                updateControlsForSpiritState(true); 
+                if (isAutoSummon) {
+                    askButton.disabled = false; 
+                }
+            }); 
+        }
+        findSpiritButton.addEventListener('click', () => findAndAssignSpirit(false));
+
+        function disconnectSpirit() {
+            startTone();
+            if (currentSpirit) {
+                lockAllControls(true);
+
+                infoMessageBox.textContent = `You have Disconnected from the Spirit (${currentSpirit}).`;
+                infoMessageBox.style.display = 'block';
+                infoMessageBox.style.opacity = 1;
+                isInfoBoxPersistent = true; // Keep it open until next action
+                
+                currentSpirit = null;
+                lastSpirit = null; 
+                dynamicMaskTextPhrase = "Oracle please answer the following question "; 
+                currentSpiritNameElement.textContent = "";
+                currentSpiritNameElement.classList.remove('visible');
+                
+                // Don't use timeout to hide, let it persist
+                updateControlsForSpiritState(false); 
+            }
+        }
+        disconnectSpiritButton.addEventListener('click', disconnectSpirit);
+
+
+        function setupPentagramCandles() {
+            candlesContainer.innerHTML = ''; 
+            const svgRect = pentagramSVG.getBoundingClientRect(); 
+            if (svgRect.width === 0 || svgRect.height === 0) {
+                requestAnimationFrame(setupPentagramCandles); return; 
+            }
+            const centerX = svgRect.left + svgRect.width / 2;
+            const centerY = svgRect.top + svgRect.height / 2;
+            const radius = Math.min(svgRect.width, svgRect.height) * 0.42; 
+            const numPoints = 5;
+            const angleStep = (Math.PI * 2) / numPoints;
+            for (let i = 0; i < numPoints; i++) {
+                const angle = (angleStep * i) - (Math.PI / 2); 
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                const candle = document.createElement('div');
+                candle.classList.add('pentagram-candle');
+                candle.style.left = `${x - 30}px`; candle.style.top = `${y - 30}px`;  
+                candlesContainer.appendChild(candle);
+            }
+            const centerCandle = document.createElement('div');
+            centerCandle.classList.add('pentagram-candle', 'center');
+            centerCandle.style.left = `${centerX - 40}px`; centerCandle.style.top = `${centerY - 40}px`;  
+            candlesContainer.appendChild(centerCandle);
+        }
+        
+        // --- Petition Input Logic (Classic Peter Answers Style) ---
+        petitionInput.addEventListener('keydown', function(event) {
+            if (event.key === '.') {
+                event.preventDefault(); 
+                if (!inSecretMode) {
+                    inSecretMode = true;
+                    trueSecretAnswer = ""; 
+                    textBeforeSecretMode = this.value; 
+                    if (dynamicMaskTextPhrase.length > 0) { 
+                        this.value = textBeforeSecretMode + dynamicMaskTextPhrase[0];
+                    }
+                } else { 
+                    inSecretMode = false;
+                }
+            }
+        });
+
+        petitionInput.addEventListener('input', function(event) {
+            if (inSecretMode) {
+                if (event.data !== '.') { 
+                    if (event.inputType === 'insertText' && event.data) {
+                        trueSecretAnswer += event.data; 
+                    } else if (event.inputType === 'deleteContentBackward') {
+                        if (trueSecretAnswer.length > 0) {
+                            trueSecretAnswer = trueSecretAnswer.slice(0, -1);
+                        }
+                    }
+                    let newMaskDisplay = "";
+                    for (let i = 0; i < trueSecretAnswer.length; i++) {
+                        newMaskDisplay += (i < dynamicMaskTextPhrase.length) ? dynamicMaskTextPhrase[i] : ' '; 
+                    }
+                    this.value = textBeforeSecretMode + newMaskDisplay;
+                }
+            } else {
+                textBeforeSecretMode = this.value;
+            }
+        });
+
+        petitionInput.addEventListener('focus', () => {
+            oracleResponseElement.textContent = "";
+            oracleResponseElement.classList.remove('revealed', 'countdown-active', 'text-glitch-active');
+            oracleResponseElement.innerHTML = ""; // Clear any appended spans like fade-in-spirit
+        });
+
+
+        questionInput.addEventListener('keyup', function(event) {
+            if (event.key === '?') {
+                askButton.click(); 
+            }
+        });
+
+        function getRandomChars(length) {
+            let result = '';
+            const characters = '!@#$%^&*()_+}{[]|\\;:?/>.<,~`0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
+        }
+
+        function applyTextGlitch(element, duration = 300, isContinuous = false) {
+            const originalText = element.textContent; 
+            element.setAttribute('data-glitch', getRandomChars(originalText.length));
+            element.classList.add('text-glitch-active');
+            
+            if (isContinuous) return; 
+
+            let startTime = Date.now();
+            function updateGlitch() {
+                if (Date.now() - startTime < duration) {
+                    element.setAttribute('data-glitch', getRandomChars(originalText.length));
+                    requestAnimationFrame(updateGlitch);
+                } else {
+                    element.classList.remove('text-glitch-active');
+                    element.textContent = originalText; 
+                }
+            }
+            requestAnimationFrame(updateGlitch);
+        }
+
+        function applyPentagramGlitch(duration = 500) {
+            if (pentagramBgElement) {
+                pentagramBgElement.classList.add('pentagram-glitch-active');
+                setTimeout(() => {
+                    pentagramBgElement.classList.remove('pentagram-glitch-active');
+                }, duration);
+            }
+        }
+        
+        function triggerGlobalAppGlitch() {
+            document.body.classList.add('app-glitch-active');
+            playGlobalGlitchSound();
+
+            setTimeout(() => {
+                document.body.classList.remove('app-glitch-active');
+            }, 150 + Math.random() * 150); 
+
+            scheduleGlobalAppGlitch(); 
+        }
+
+        function scheduleGlobalAppGlitch() {
+            if (globalAppGlitchIntervalId) {
+                clearTimeout(globalAppGlitchIntervalId);
+            }
+            const randomDelay = (Math.random() * (120000 - 60000) + 60000) * (1 - 0.4); 
+            globalAppGlitchIntervalId = setTimeout(triggerGlobalAppGlitch, randomDelay);
+        }
+
+
+        function triggerSpecialCountdown() {
+            lockAllControls(true); 
+            oracleResponseElement.classList.remove('revealed');
+            oracleResponseElement.classList.add('countdown-active'); 
+            document.body.classList.add('app-glitch-active'); 
+            playGlobalGlitchSound(); 
+            startEerieCountdownSound(); 
+
+            let count = 10;
+            const initialEerieVolume = -60; 
+            const targetEerieVolume = -25;  
+            const volumeStep = (targetEerieVolume - initialEerieVolume) / 10; 
+
+            let countdownInterval;
+
+            function countdownStep() {
+                if (count >= 0) {
+                    oracleResponseElement.textContent = count;
+                    oracleResponseElement.setAttribute('data-glitch', getRandomChars(String(count).length));
+                    oracleResponseElement.classList.add('text-glitch-active'); 
+                    playCountdownGlitchSound();
+
+                    if (eerieCountdownSynth) {
+                        const currentTargetVol = initialEerieVolume + (volumeStep * (10 - count));
+                        eerieCountdownSynth.volume.rampTo(currentTargetVol, 0.8); 
+                    }
+                    count--;
+                } else {
+                    clearInterval(countdownInterval); 
+                    document.body.classList.remove('app-glitch-active'); 
+                    oracleResponseElement.classList.remove('text-glitch-active');
+                    oracleResponseElement.classList.remove('countdown-active');
+                    oracleResponseElement.classList.add('revealed'); 
+                    stopEerieCountdownSound(); 
+                    
+                    const firstPartText = "This spirit has leached itself onto you... Finding new spirit......... ";
+                    const secondPartText = "New spirit found.";
+                    
+                    oracleResponseElement.textContent = firstPartText;
+                    applyTextGlitch(oracleResponseElement, 600); 
+
+                    setTimeout(() => { 
+                        const newSpiritSpan = document.createElement('span');
+                        newSpiritSpan.textContent = secondPartText;
+                        newSpiritSpan.classList.add('fade-in-spirit');
+                        oracleResponseElement.appendChild(newSpiritSpan);
+                        void newSpiritSpan.offsetWidth; 
+                        newSpiritSpan.classList.add('visible');
+                        
+                        setTimeout(() => { 
+                             oracleResponseElement.textContent = ""; 
+                             oracleResponseElement.classList.remove('revealed'); 
+                             oracleResponseElement.innerHTML = ""; 
+                        }, 4000 + 5000); 
+
+
+                        setTimeout(() => findAndAssignSpirit(true), 500); 
+                        
+                        trueSecretAnswer = ""; inSecretMode = false; 
+                        textBeforeSecretMode = "";
+                        petitionInput.value = ""; questionInput.value = "";
+                        scheduleGlobalAppGlitch(); 
+                    }, 7000); 
+                }
+            }
+            
+            if (globalAppGlitchIntervalId) { 
+                clearTimeout(globalAppGlitchIntervalId);
+            }
+            countdownInterval = setInterval(countdownStep, 1000); 
+            countdownStep(); 
+        }
+
+
+        askButton.addEventListener('click', () => {
+            startTone().then(() => { 
+                initReplySynth(); 
+                initCountdownGlitchSound(); 
+                initEerieCountdownSound(); 
+                if (!isAmbientSoundInitialized && isAmbientSoundPlaying) { 
+                    initAmbientSound();
+                }
+            });
+
+            // Hide petition hint when asking a question
+            if (isInfoBoxPersistent) {
+                infoMessageBox.style.opacity = 0;
+                setTimeout(() => { infoMessageBox.style.display = 'none'; }, 500);
+                isInfoBoxPersistent = false;
+            }
+
+
+            const questionText = questionInput.value.trim();
+            const lowerQuestion = questionText.toLowerCase();
+            const countdownTriggers = ["do it then", "im not scared", "you wont", "you won't"];
+            
+            if (countdownTriggers.includes(lowerQuestion)) {
+                triggerSpecialCountdown();
+                incorrectPetitionAttempts = 0; 
+                return; 
+            }
+
+            oracleResponseElement.classList.remove('revealed');
+            oracleResponseElement.classList.remove('countdown-active'); 
+            oracleResponseElement.classList.remove('text-glitch-active'); 
+            oracleResponseElement.textContent = "The Oracle stirs..."; 
+            
+            setTimeout(() => {
+                let answerText = "";
+                
+                if (questionText === "") {
+                    answerText = "A question unasked yields no reply.";
+                    incorrectPetitionAttempts = 0; 
+                } else if (trueSecretAnswer !== "" && !inSecretMode) { 
+                    answerText = trueSecretAnswer;
+                    incorrectPetitionAttempts = 0; 
+                } else if (inSecretMode) { 
+                    answerText = "The ritual is incomplete. Seal thy hidden words.";
+                } else { 
+                    incorrectPetitionAttempts++;
+                    if (incorrectPetitionAttempts >= 3) {
+                        const angryResponses = [
+                            "You DARE mock the spirits with such trivialities?!",
+                            "The veil thins, and your insolence is NOTED.",
+                            "Three times you spurn the path... patience wears thin.",
+                            "CEASE YOUR EMPTY WORDS, or face the true void!",
+                            "The spirits grow restless with your charade!"
+                        ];
+                        answerText = angryResponses[Math.floor(Math.random() * angryResponses.length)];
+                    } else {
+                         const genericAnswers = [
+                            "The veil remains drawn upon this query.", "Silence is the Oracle's current counsel.",
+                            "Fate's threads are tangled beyond knowing.", "Seek answers in the echo of your own heart.",
+                            "Not all that is hidden wishes to be found.", "The spirits offer naught but shadows now."
+                        ];
+                        answerText = genericAnswers[Math.floor(Math.random() * genericAnswers.length)];
+                    }
+                }
+                
+                oracleResponseElement.textContent = answerText; 
+                oracleResponseElement.classList.add('revealed'); 
+
+                if (Math.random() < 0.35 && answerText !== "A question unasked yields no reply." && incorrectPetitionAttempts < 3) { 
+                    setTimeout(() => applyTextGlitch(oracleResponseElement, 350), 50);
+                }
+                
+                trueSecretAnswer = ""; 
+                inSecretMode = false;
+                textBeforeSecretMode = ""; 
+                petitionInput.value = ""; questionInput.value = "";
+            }, 900); 
+        });
+
+        // Mouse Follower Logic
+        let mouseFollowerActive = false;
+        let updateFollowerPositionRef = null; 
+
+        document.body.addEventListener('click', function(event) {
+            if (!currentSpirit && 
+                !event.target.closest('.oracle-container') &&
+                !event.target.closest('.controls-area button') &&
+                !event.target.closest('#infoMessageBox') && 
+                !event.target.closest('#spiritFoundBox') 
+            ) {
+                if (mouseFollowerActive) return; 
+                
+                mouseFollowerActive = true;
+                mouseFollowerMessage.textContent = "You Must Summon Spirit First";
+                mouseFollowerMessage.style.display = 'block';
+                mouseFollowerMessage.style.opacity = '1';
+                
+                updateFollowerPositionRef = (e) => { 
+                    mouseFollowerMessage.style.left = `${e.clientX + 15}px`;
+                    mouseFollowerMessage.style.top = `${e.clientY + 15}px`;
+                };
+                updateFollowerPositionRef(event); 
+                document.addEventListener('mousemove', updateFollowerPositionRef);
+
+                if (mouseFollowerTimeout) clearTimeout(mouseFollowerTimeout);
+                mouseFollowerTimeout = setTimeout(() => {
+                    mouseFollowerMessage.style.opacity = '0';
+                    setTimeout(() => {
+                        mouseFollowerMessage.style.display = 'none';
+                        if(updateFollowerPositionRef) document.removeEventListener('mousemove', updateFollowerPositionRef);
+                        mouseFollowerActive = false;
+                    }, 500);
+                }, 3000);
+            } else if (currentSpirit && mouseFollowerActive) { 
+                 mouseFollowerMessage.style.opacity = '0';
+                 setTimeout(() => {
+                    mouseFollowerMessage.style.display = 'none';
+                    if(updateFollowerPositionRef) document.removeEventListener('mousemove', updateFollowerPositionRef);
+                    mouseFollowerActive = false;
+                 }, 500);
+            }
+        });
+
+
+        setInterval(() => {
+            if (!document.body.classList.contains('app-glitch-active') || !askButton.disabled) { 
+                 if (Math.random() < 0.60) { 
+                    applyPentagramGlitch(Math.random() * 400 + 200); 
+                }
+            }
+        }, 5000); 
+
+
+        window.addEventListener('load', () => {
+            requestAnimationFrame(setupPentagramCandles); 
+            initAmbientSound(); 
+            initGlobalGlitchSound(); 
+            initCountdownGlitchSound(); 
+            initEerieCountdownSound(); 
+            scheduleGlobalAppGlitch(); 
+            updateControlsForSpiritState(false); 
+        });
+        window.addEventListener('resize', () => {
+            requestAnimationFrame(setupPentagramCandles); 
+        });
+    </script>
+</body>
+</html>
